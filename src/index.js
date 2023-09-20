@@ -4,12 +4,12 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid'
 
 import models from './models';
+import routes from './routes';
 
 //console.log('Hello World!')
 //console.log(process.env.SECRET)
 //console.log(process.env.NAME)
 
-const {users, messages} = models
 
 const app = express();
 
@@ -18,91 +18,16 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 app.use((req, res, next) => {
-	req.me = users[1];
+	req.context = {
+		models,
+		me: models.users[1],
+	}
 	next();
 })
 
-app.get('/', (req, res) => {
-	res.send('Received a HTTP GET method')
-})
-
-app.post('/', (req, res) => {
-	res.send('Received a HTTP POST method')
-})
-
-app.put('/', (req, res) => {
-	res.send('Received a HTTP PUT method')
-})
-
-app.delete('/', (req, res) => {
-	res.send('Received a HTTP DELETE method')
-})
-
-app.get('/users', (req, res) => {
-	res.send(Object.values(req.context.users))
-})
-
-app.get('/users/:userId', (req, res) => {
-	res.send(users[req.params.userId])
-})
-
-app.post('/users', (req, res) => {
-	res.send('POST HTTP method on users resource')
-})
-
-app.put('/users/:userId', (req, res) => {
-	res.send(`PUT HTTP method on users/${req.params.userId} resource`)
-})
-
-app.delete('/users/:userId', (req, res) => {
-	res.send(`DELETE HTTP method on users/${req.params.userId} resource`)
-})
-
-app.get('/messages', (req, res) => {
-	res.send(Object.values(messages))
-})
-
-app.get('/messages/:messageId', (req, res) => {
-	res.send(messages[req.params.messageId])
-})
-
-app.post('/messages', (req, res) => {
-	const id = uuidv4();
-	const message = {
-		id,
-		text: req.body.text,
-		userId: req.me.id
-	}
-	messages[id] = message;
-
-	return res.send(message);
-})
-
-app.put('/messages/:messageId', (req, res) => {
-	res.send(`PUT HTTP method on messages/${req.params.messageId} resource`)
-})
-
-app.delete('/messages/:messageId', (req, res) => {
-	const {
-		[req.params.messageId]: message,
-		...otherMessages
-	} = messages
-
-	messages = otherMessages
-	return res.send(message);
-})
-
-app.get('/session', (req, res) => {
-	return res.send(users[req.me.id]);
-})
-
-app.get('/secret', (req, res) => {
-	res.send(process.env.SECRET)
-})
-
-app.get('/name', (req, res) => {
-	res.send(process.env.NAME)
-})
+app.use('/session', routes.session)
+app.use('/users', routes.user)
+app.use('/messages', routes.message)
 
 app.listen(process.env.PORT, () => {
 	console.log(`[!] Listening on port ${process.env.PORT}!`);
