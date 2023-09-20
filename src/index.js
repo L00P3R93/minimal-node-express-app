@@ -3,34 +3,13 @@ import cors from 'cors';
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid'
 
+import models from './models';
+
 //console.log('Hello World!')
 //console.log(process.env.SECRET)
 //console.log(process.env.NAME)
 
-
-let users = {
-	1: {
-	    id: '1',
-	    username: process.env.NAME,
-  	},
-  	2: {
-	    id: '2',
-	    username: 'Dave Davids',
-  	},
-}
-
-let messages = {
-	1: {
-	    id: '1',
-	    text: 'Hello World',
-	    userId: '1',
-  	},
-  	2: {
-	    id: '2',
-	    text: 'By World',
-	    userId: '2',
-  	},
-}
+const {users, messages} = models
 
 const app = express();
 
@@ -60,7 +39,7 @@ app.delete('/', (req, res) => {
 })
 
 app.get('/users', (req, res) => {
-	res.send(Object.values(users))
+	res.send(Object.values(req.context.users))
 })
 
 app.get('/users/:userId', (req, res) => {
