@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
+import { v4 as uuidv4 } from 'uuid'
 
 //console.log('Hello World!')
 //console.log(process.env.SECRET)
@@ -10,7 +11,7 @@ import express from 'express';
 let users = {
 	1: {
 	    id: '1',
-	    username: 'Robin Wieruch',
+	    username: process.env.NAME,
   	},
   	2: {
 	    id: '2',
@@ -34,6 +35,13 @@ let messages = {
 const app = express();
 
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+
+app.use((req, res, next) => {
+	req.me = users[1];
+	next();
+})
 
 app.get('/', (req, res) => {
 	res.send('Received a HTTP GET method')
@@ -80,7 +88,15 @@ app.get('/messages/:messageId', (req, res) => {
 })
 
 app.post('/messages', (req, res) => {
-	res.send('POST HTTP method on messages resource')
+	const id = uuidv4();
+	const message = {
+		id,
+		text: req.body.text,
+		userId: req.me.id
+	}
+	messages[id] = message;
+
+	return res.send(message);
 })
 
 app.put('/messages/:messageId', (req, res) => {
@@ -88,9 +104,18 @@ app.put('/messages/:messageId', (req, res) => {
 })
 
 app.delete('/messages/:messageId', (req, res) => {
-	res.send(`DELETE HTTP method on messaged/${req.params.messageId} resource`)
+	const {
+		[req.params.messageId]: message,
+		...otherMessages
+	} = messages
+
+	messages = otherMessages
+	return res.send(message);
 })
 
+app.get('/session', (req, res) => {
+	return res.send(users[req.me.id]);
+})
 
 app.get('/secret', (req, res) => {
 	res.send(process.env.SECRET)
